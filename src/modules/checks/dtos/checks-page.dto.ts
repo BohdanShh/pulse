@@ -1,4 +1,4 @@
-import { PaginationMetadataDto } from '../../../common/pagination/pagination-metadata.dto.js';
+import { PaginationMetadataDto } from '../../../common/pagination/dtos/pagination-metadata.dto.js';
 import { Check } from '../entities/check.entity.js';
 
 export class ChecksPageDto {

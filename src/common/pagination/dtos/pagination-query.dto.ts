@@ -1,8 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
-export const DEFAULT_PAGE = 1;
-export const DEFAULT_LIMIT = 20;
+import { DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT } from '../constants/pagination.constant.js';
 
 export class PaginationQueryDto {
   /**
@@ -23,6 +22,6 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(MAX_LIMIT)
   limit?: number = DEFAULT_LIMIT;
 }

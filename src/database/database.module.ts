@@ -4,8 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import { type AppConfigService } from '../config/env.validation.js';
-import * as schema from './schema.js';
+import { type AppConfigService } from '../config/env.config.js';
+import * as schema from './schema/index.js';
 
 export const DB = Symbol('DB');
 export const PG_POOL = Symbol('PG_POOL');

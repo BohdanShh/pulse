@@ -1,19 +1,26 @@
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import { checks, monitors } from './schema.js';
+import { DAY_MS, MINUTE_MS, SECOND_MS } from '../../common/constants/time.constant.js';
+import { CHECK_TIMEOUT_MS } from '../../modules/checks/constants/checker.constant.js';
+import { type CheckResult } from '../../modules/checks/types/check-result.type.js';
+import {
+  timeoutErrorMessage,
+  unexpectedStatusErrorMessage,
+} from '../../modules/checks/utils/check-error-message.util.js';
+import { checks, monitors } from '../schema/index.js';
 
 type NewMonitor = typeof monitors.$inferInsert;
 type NewCheck = typeof checks.$inferInsert;
-type CheckResult = Omit<NewCheck, 'monitorId' | 'checkedAt'>;
 
 const DAYS = 7;
 const BATCH_SIZE = 5000;
-const TIMEOUT_MS = 10_000;
+const OUTAGE_DAYS_AGO = 3;
+const OUTAGE_MINUTES = 25;
 
 const now = Date.now();
-const startedAt = now - DAYS * 24 * 60 * 60 * 1000;
+const startedAt = now - DAYS * DAY_MS;
 
 const randomBetween = (min: number, max: number) => Math.round(min + Math.random() * (max - min));
 
@@ -21,24 +28,25 @@ const success = (min: number, max: number): CheckResult => ({
   ok: true,
   statusCode: 200,
   responseTimeMs: randomBetween(min, max),
+  error: null,
 });
 
 const serverError = (): CheckResult => ({
   ok: false,
   statusCode: 500,
   responseTimeMs: randomBetween(50, 300),
-  error: 'Unexpected status code 500',
+  error: unexpectedStatusErrorMessage(500),
 });
 
 const timeout = (): CheckResult => ({
   ok: false,
   statusCode: null,
-  responseTimeMs: TIMEOUT_MS,
-  error: `Timeout after ${TIMEOUT_MS}ms`,
+  responseTimeMs: CHECK_TIMEOUT_MS,
+  error: timeoutErrorMessage(),
 });
 
-const outageStart = now - 3 * 24 * 60 * 60 * 1000;
-const outageEnd = outageStart + 25 * 60 * 1000;
+const outageStart = now - OUTAGE_DAYS_AGO * DAY_MS;
+const outageEnd = outageStart + OUTAGE_MINUTES * MINUTE_MS;
 
 const demoMonitors: { monitor: NewMonitor; check: (time: number) => CheckResult }[] = [
   {
@@ -87,7 +95,7 @@ const demoMonitors: { monitor: NewMonitor; check: (time: number) => CheckResult 
 ];
 
 function generateChecks({ monitor, check }: (typeof demoMonitors)[number]): NewCheck[] {
-  const step = monitor.intervalSeconds! * 1000;
+  const step = monitor.intervalSeconds! * SECOND_MS;
   const rows: NewCheck[] = [];
 
   for (let time = startedAt; time <= now; time += step) {
@@ -122,6 +130,12 @@ async function seed() {
         for (let i = 0; i < rows.length; i += BATCH_SIZE) {
           await tx.insert(checks).values(rows.slice(i, i + BATCH_SIZE));
         }
+
+        const lastCheck = rows[rows.length - 1];
+        await tx
+          .update(monitors)
+          .set({ status: lastCheck.ok ? 'UP' : 'DOWN', lastCheckedAt: lastCheck.checkedAt })
+          .where(eq(monitors.id, demo.monitor.id!));
 
         console.log(`${demo.monitor.name}: ${rows.length} checks`);
       }

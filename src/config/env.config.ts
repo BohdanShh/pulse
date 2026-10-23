@@ -3,11 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsString, Matches, Max, Min, validateSync } from 'class-validator';
 
+const DEFAULT_PORT = 3000;
+const MAX_PORT = 65535;
+
 export class EnvironmentVariables {
   @IsInt()
   @Min(1)
-  @Max(65535)
-  PORT: number = 3000;
+  @Max(MAX_PORT)
+  PORT: number = DEFAULT_PORT;
 
   @IsString()
   @IsNotEmpty()

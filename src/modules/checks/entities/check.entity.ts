@@ -1,4 +1,4 @@
-import { checks } from '../../../database/schema.js';
+import { checks } from '../../../database/schema/index.js';
 
 type CheckRow = Omit<typeof checks.$inferSelect, 'monitorId'>;
 

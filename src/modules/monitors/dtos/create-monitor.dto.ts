@@ -10,22 +10,29 @@ import {
   Min,
 } from 'class-validator';
 
-import { httpMethod } from '../../../database/schema.js';
+import { httpMethod } from '../../../database/schema/index.js';
+import {
+  MAX_INTERVAL_SECONDS,
+  MIN_INTERVAL_SECONDS,
+  MONITOR_NAME_MAX_LENGTH,
+  MONITOR_URL_MAX_LENGTH,
+  MONITOR_URL_PROTOCOLS,
+} from '../constants/monitor.constant.js';
 import { type HttpMethod } from '../entities/monitor.entity.js';
 
 export class CreateMonitorDto {
   /** @example "GitHub API" */
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MaxLength(MONITOR_NAME_MAX_LENGTH)
   name: string;
 
   /**
    * URL to check. Must start with http:// or https://.
    * @example "https://api.github.com"
    */
-  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
-  @MaxLength(2048)
+  @IsUrl({ protocols: MONITOR_URL_PROTOCOLS, require_protocol: true })
+  @MaxLength(MONITOR_URL_MAX_LENGTH)
   url: string;
 
   /** HTTP method used for the check. Defaults to GET. */
@@ -39,7 +46,7 @@ export class CreateMonitorDto {
    */
   @IsOptional()
   @IsInt()
-  @Min(30)
-  @Max(3600)
+  @Min(MIN_INTERVAL_SECONDS)
+  @Max(MAX_INTERVAL_SECONDS)
   intervalSeconds?: number;
 }

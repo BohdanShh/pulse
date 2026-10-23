@@ -15,6 +15,13 @@
       "when": 1792786918731,
       "tag": "0001_create_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792789363139,
+      "tag": "0002_add_monitor_status",
+      "breakpoints": true
     }
   ]
 }

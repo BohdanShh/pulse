@@ -1,4 +1,4 @@
-import { type StatsPeriod } from './stats-query.dto.js';
+import { type StatsPeriod } from '../types/stats-period.type.js';
 
 export class StatsDto {
   /** @example "24h" */

@@ -1,12 +1,6 @@
-import { PaginationMetadataDto } from './pagination-metadata.dto.js';
-import { DEFAULT_LIMIT, DEFAULT_PAGE, PaginationQueryDto } from './pagination-query.dto.js';
-
-export function getOffset({
-  page = DEFAULT_PAGE,
-  limit = DEFAULT_LIMIT,
-}: PaginationQueryDto): number {
-  return (page - 1) * limit;
-}
+import { DEFAULT_LIMIT, DEFAULT_PAGE } from '../constants/pagination.constant.js';
+import { PaginationMetadataDto } from '../dtos/pagination-metadata.dto.js';
+import { PaginationQueryDto } from '../dtos/pagination-query.dto.js';
 
 export function buildPaginationMetadata(
   { page = DEFAULT_PAGE, limit = DEFAULT_LIMIT }: PaginationQueryDto,

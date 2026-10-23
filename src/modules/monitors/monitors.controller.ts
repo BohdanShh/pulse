@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { CreateMonitorDto } from './dto/create-monitor.dto.js';
-import { UpdateMonitorDto } from './dto/update-monitor.dto.js';
+import { CreateMonitorDto } from './dtos/create-monitor.dto.js';
+import { UpdateMonitorDto } from './dtos/update-monitor.dto.js';
 import { Monitor } from './entities/monitor.entity.js';
-import { MonitorsService } from './monitors.service.js';
+import { MonitorsService } from './services/monitors.service.js';
 
 @ApiTags('Monitors')
 @Controller('monitors')

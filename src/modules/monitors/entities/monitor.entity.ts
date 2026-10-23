@@ -1,6 +1,8 @@
-import { httpMethod, monitors } from '../../../database/schema.js';
+import { httpMethod, monitorStatus, monitors } from '../../../database/schema/index.js';
 
 export type HttpMethod = (typeof httpMethod.enumValues)[number];
+
+export type MonitorStatus = (typeof monitorStatus.enumValues)[number];
 
 type MonitorRow = typeof monitors.$inferSelect;
 
@@ -22,6 +24,12 @@ export class Monitor implements MonitorRow {
    * @example 60
    */
   intervalSeconds: number;
+
+  /** PENDING until the first check, then UP or DOWN based on the last check. */
+  status: MonitorStatus;
+
+  /** When the monitor was last checked. Null if it has never been checked. */
+  lastCheckedAt: Date | null;
 
   createdAt: Date;
 }
