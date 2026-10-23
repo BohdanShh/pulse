@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
 
 import { DEFAULT_LIMIT, PaginationQueryDto } from '../../common/pagination/pagination-query.dto.js';
 import { buildPaginationMetadata, getOffset } from '../../common/pagination/pagination.js';
@@ -8,6 +8,8 @@ import { DB, type Database } from '../../database/database.module.js';
 import { checks } from '../../database/schema.js';
 import { MonitorsService } from '../monitors/monitors.service.js';
 import { ChecksPageDto } from './dto/checks-page.dto.js';
+import { DEFAULT_STATS_PERIOD, STATS_PERIODS, StatsQueryDto } from './dto/stats-query.dto.js';
+import { StatsDto } from './dto/stats.dto.js';
 
 @Injectable()
 export class ChecksService {
@@ -40,5 +42,31 @@ export class ChecksService {
     ]);
 
     return { items, metadata: buildPaginationMetadata(query, all) };
+  }
+
+  async getStats(monitorId: string, query: StatsQueryDto): Promise<StatsDto> {
+    await this.monitorsService.findOne(monitorId);
+
+    const period = query.period ?? DEFAULT_STATS_PERIOD;
+    const from = new Date(Date.now() - STATS_PERIODS[period]);
+
+    const onlyOk = sql`filter (where ${checks.ok})`;
+    const avg = sql`round(avg(${checks.responseTimeMs}) ${onlyOk})`;
+    const p95 = sql`round(percentile_cont(0.95) within group (order by ${checks.responseTimeMs}) ${onlyOk})`;
+
+    const [row] = await this.db
+      .select({
+        checks: count(),
+        failures: sql<number>`count(*) filter (where not ${checks.ok})`.mapWith(Number),
+        avgResponseTimeMs: sql<number | null>`${avg}`.mapWith(Number),
+        p95ResponseTimeMs: sql<number | null>`${p95}`.mapWith(Number),
+      })
+      .from(checks)
+      .where(and(eq(checks.monitorId, monitorId), gte(checks.checkedAt, from)));
+
+    const uptimePercent =
+      row.checks > 0 ? Math.round(((row.checks - row.failures) / row.checks) * 10_000) / 100 : null;
+
+    return { period, from, ...row, uptimePercent };
   }
 }
