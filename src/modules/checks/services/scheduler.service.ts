@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 
 import { runWithConcurrency } from '../../../common/utils/run-with-concurrency.util.js';
@@ -11,24 +11,42 @@ import { ChecksRepository } from '../repositories/checks.repository.js';
 import { ChecksService } from './checks.service.js';
 
 @Injectable()
-export class SchedulerService {
+export class SchedulerService implements BeforeApplicationShutdown {
   private readonly logger = new Logger(SchedulerService.name);
-  private isRunning = false;
+  private currentTick: Promise<void> | null = null;
+  private isShuttingDown = false;
 
   constructor(
     private readonly checksRepository: ChecksRepository,
     private readonly checksService: ChecksService,
   ) {}
 
+  async beforeApplicationShutdown() {
+    this.isShuttingDown = true;
+
+    if (this.currentTick) {
+      this.logger.log('Waiting for the current tick to finish before shutdown');
+      await this.currentTick;
+    }
+  }
+
   @Interval(SCHEDULER_TICK_MS)
-  async tick(): Promise<void> {
-    if (this.isRunning) {
+  tick(): Promise<void> | void {
+    if (this.isShuttingDown) return;
+
+    if (this.currentTick) {
       this.logger.warn('Previous tick is still running, skipping');
       return;
     }
 
-    this.isRunning = true;
+    this.currentTick = this.checkDueMonitors().finally(() => {
+      this.currentTick = null;
+    });
 
+    return this.currentTick;
+  }
+
+  private async checkDueMonitors(): Promise<void> {
     try {
       const monitors = await this.checksRepository.claimDueMonitors(CLAIM_BATCH_SIZE);
       if (monitors.length === 0) return;
@@ -46,8 +64,6 @@ export class SchedulerService {
       );
     } catch (error) {
       this.logger.error('Scheduler tick failed', error instanceof Error ? error.stack : error);
-    } finally {
-      this.isRunning = false;
     }
   }
 }
