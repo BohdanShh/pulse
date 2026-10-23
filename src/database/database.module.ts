@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
+import { type AppConfigService } from '../config/env.validation.js';
 import * as schema from './schema.js';
 
 export const DB = Symbol('DB');
@@ -17,8 +18,18 @@ export type Database = NodePgDatabase<typeof schema>;
     {
       provide: PG_POOL,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        new Pool({ connectionString: config.getOrThrow<string>('DATABASE_URL') }),
+      useFactory: async (config: AppConfigService) => {
+        const pool = new Pool({ connectionString: config.get('DATABASE_URL', { infer: true }) });
+
+        try {
+          await pool.query('SELECT 1');
+        } catch (error) {
+          await pool.end();
+          throw new Error(`Cannot connect to the database: ${(error as Error).message}`);
+        }
+
+        return pool;
+      },
     },
     {
       provide: DB,
