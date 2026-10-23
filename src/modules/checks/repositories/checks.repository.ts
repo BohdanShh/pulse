@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import { DB, type Database } from '../../../database/database.module.js';
 import { checks, monitors } from '../../../database/schema/index.js';
-import { type MonitorStatus } from '../../monitors/entities/monitor.entity.js';
+import { Monitor, type MonitorStatus } from '../../monitors/entities/monitor.entity.js';
 import { RESPONSE_TIME_PERCENTILE } from '../constants/stats.constant.js';
 import { Check } from '../entities/check.entity.js';
 import { type CheckResult } from '../types/check-result.type.js';
@@ -25,6 +25,11 @@ const percentile = sql.raw(String(RESPONSE_TIME_PERCENTILE));
 const avgResponseTime = sql`round(avg(${checks.responseTimeMs}) ${onlyOk})`;
 const percentileResponseTime = sql`round(percentile_cont(${percentile}) within group (order by ${checks.responseTimeMs}) ${onlyOk})`;
 
+const isDue = or(
+  isNull(monitors.lastCheckedAt),
+  sql`${monitors.lastCheckedAt} + ${monitors.intervalSeconds} * interval '1 second' <= now()`,
+);
+
 const statsColumns = {
   checks: sql<number>`count(*)`.mapWith(Number),
   failures: sql<number>`count(*) ${onlyFailed}`.mapWith(Number),
@@ -35,6 +40,22 @@ const statsColumns = {
 @Injectable()
 export class ChecksRepository {
   constructor(@Inject(DB) private readonly db: Database) {}
+
+  claimDueMonitors(limit: number): Promise<Monitor[]> {
+    const dueIds = this.db
+      .select({ id: monitors.id })
+      .from(monitors)
+      .where(isDue)
+      .orderBy(sql`${monitors.lastCheckedAt} nulls first`)
+      .limit(limit)
+      .for('update', { skipLocked: true });
+
+    return this.db
+      .update(monitors)
+      .set({ lastCheckedAt: new Date() })
+      .where(inArray(monitors.id, dueIds))
+      .returning();
+  }
 
   recordCheck(
     monitorId: string,

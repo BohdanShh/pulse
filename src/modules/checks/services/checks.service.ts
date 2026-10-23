@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/pagination/dtos/pagination-query.dto.js';
 import { buildPaginationMetadata } from '../../../common/pagination/utils/build-pagination-metadata.util.js';
 import { getLimitOffset } from '../../../common/pagination/utils/get-limit-offset.util.js';
+import { Monitor } from '../../monitors/entities/monitor.entity.js';
 import { MonitorsService } from '../../monitors/services/monitors.service.js';
 import { DEFAULT_STATS_PERIOD, STATS_PERIODS } from '../constants/stats.constant.js';
 import { ChecksPageDto } from '../dtos/checks-page.dto.js';
@@ -23,7 +24,10 @@ export class ChecksService {
 
   async runCheck(monitorId: string): Promise<Check> {
     const monitor = await this.monitorsService.findOne(monitorId);
+    return this.checkMonitor(monitor);
+  }
 
+  async checkMonitor(monitor: Monitor): Promise<Check> {
     const checkedAt = new Date();
     const result = await this.checkerService.check(monitor);
 
