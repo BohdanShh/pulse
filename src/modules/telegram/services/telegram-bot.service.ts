@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { Bot, GrammyError } from 'grammy';
 
+import { getErrorStack } from '../../../common/utils/get-error-stack.util.js';
 import { type AppConfigService } from '../../../config/env.config.js';
 import { UsersService } from '../../users/services/users.service.js';
 import { BOT_COMMANDS, POLLING_CONFLICT_ERROR_CODE } from '../constants/telegram.constant.js';
@@ -30,7 +31,7 @@ export class TelegramBotService
     this.bot = new Bot(config.get('TELEGRAM_BOT_TOKEN', { infer: true }));
   }
 
-  onModuleInit() {
+  onModuleInit(): void {
     this.bot.command('start', async ctx => {
       if (!ctx.from) return;
 
@@ -39,11 +40,11 @@ export class TelegramBotService
     });
 
     this.bot.catch(({ error, ctx }) => {
-      this.logger.error(`Failed to handle update ${ctx.update.update_id}`, error);
+      this.logger.error(`Failed to handle update ${ctx.update.update_id}`, getErrorStack(error));
     });
   }
 
-  async onApplicationBootstrap() {
+  async onApplicationBootstrap(): Promise<void> {
     await this.bot.init();
     await this.bot.api.setMyCommands(BOT_COMMANDS);
 
@@ -56,11 +57,11 @@ export class TelegramBotService
           this.logger.error('Another process is already polling with this bot token');
           return;
         }
-        this.logger.error('Bot polling stopped', error);
+        this.logger.error('Bot polling stopped', getErrorStack(error));
       });
   }
 
-  async beforeApplicationShutdown() {
+  async beforeApplicationShutdown(): Promise<void> {
     await this.bot.stop();
   }
 }

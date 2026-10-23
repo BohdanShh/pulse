@@ -10,15 +10,17 @@ import {
   Min,
 } from 'class-validator';
 
-import { httpMethod } from '../../../database/schema/index.js';
 import {
   MAX_INTERVAL_SECONDS,
   MIN_INTERVAL_SECONDS,
+} from '../../../database/constants/monitors.constant.js';
+import { httpMethod } from '../../../database/schema/index.js';
+import {
   MONITOR_NAME_MAX_LENGTH,
   MONITOR_URL_MAX_LENGTH,
   MONITOR_URL_PROTOCOLS,
 } from '../constants/monitor.constant.js';
-import { type HttpMethod } from '../entities/monitor.entity.js';
+import { type HttpMethod } from '../types/http-method.type.js';
 
 export class CreateMonitorDto {
   /** @example "GitHub API" */

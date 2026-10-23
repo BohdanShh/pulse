@@ -1,8 +1,6 @@
-import { httpMethod, monitorStatus, monitors } from '../../../database/schema/index.js';
-
-export type HttpMethod = (typeof httpMethod.enumValues)[number];
-
-export type MonitorStatus = (typeof monitorStatus.enumValues)[number];
+import { monitors } from '../../../database/schema/index.js';
+import { type HttpMethod } from '../types/http-method.type.js';
+import { type MonitorStatus } from '../types/monitor-status.type.js';
 
 type MonitorRow = typeof monitors.$inferSelect;
 

@@ -5,7 +5,7 @@ import {
   DEFAULT_INTERVAL_SECONDS,
   MAX_INTERVAL_SECONDS,
   MIN_INTERVAL_SECONDS,
-} from '../../modules/monitors/constants/monitor.constant.js';
+} from '../constants/monitors.constant.js';
 
 export const httpMethod = pgEnum('http_method', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']);
 

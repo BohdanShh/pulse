@@ -1,8 +1,13 @@
 import { CHECK_TIMEOUT_MS } from '../constants/checker.constant.js';
 
-export const timeoutErrorMessage = () => `Timeout after ${CHECK_TIMEOUT_MS}ms`;
+export function timeoutErrorMessage(): string {
+  return `Timeout after ${CHECK_TIMEOUT_MS}ms`;
+}
 
-export const unexpectedStatusErrorMessage = (statusCode: number) =>
-  `Unexpected status code ${statusCode}`;
+export function unexpectedStatusErrorMessage(statusCode: number): string {
+  return `Unexpected status code ${statusCode}`;
+}
 
-export const tlsErrorMessage = (code: string) => `TLS error: ${code}`;
+export function tlsErrorMessage(code: string): string {
+  return `TLS error: ${code}`;
+}

@@ -1,0 +1,3 @@
+export const MIN_INTERVAL_SECONDS = 30;
+export const MAX_INTERVAL_SECONDS = 3600;
+export const DEFAULT_INTERVAL_SECONDS = 60;

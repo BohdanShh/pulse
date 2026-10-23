@@ -5,14 +5,13 @@ import { Pool } from 'pg';
 import { DAY_MS, MINUTE_MS, SECOND_MS } from '../../common/constants/time.constant.js';
 import { CHECK_TIMEOUT_MS } from '../../modules/checks/constants/checker.constant.js';
 import { type CheckResult } from '../../modules/checks/types/check-result.type.js';
+import { type NewCheck } from '../../modules/checks/types/new-check.type.js';
 import {
   timeoutErrorMessage,
   unexpectedStatusErrorMessage,
 } from '../../modules/checks/utils/check-error-message.util.js';
+import { type NewMonitor } from '../../modules/monitors/types/new-monitor.type.js';
 import { checks, monitors } from '../schema/index.js';
-
-type NewMonitor = typeof monitors.$inferInsert;
-type NewCheck = typeof checks.$inferInsert;
 
 const DAYS = 7;
 const BATCH_SIZE = 5000;
@@ -105,7 +104,7 @@ function generateChecks({ monitor, check }: (typeof demoMonitors)[number]): NewC
   return rows;
 }
 
-async function seed() {
+async function seed(): Promise<void> {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not set');
   }

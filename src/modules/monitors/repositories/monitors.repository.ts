@@ -5,8 +5,7 @@ import { eq } from 'drizzle-orm';
 import { DB, type Database } from '../../../database/database.module.js';
 import { monitors } from '../../../database/schema/index.js';
 import { Monitor } from '../entities/monitor.entity.js';
-
-type NewMonitor = typeof monitors.$inferInsert;
+import { type NewMonitor } from '../types/new-monitor.type.js';
 
 @Injectable()
 export class MonitorsRepository {

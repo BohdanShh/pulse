@@ -11,6 +11,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+import { MAX_HTTP_STATUS_CODE, MIN_HTTP_STATUS_CODE } from '../constants/checks.constant.js';
 import { monitors } from './monitors.schema.js';
 
 export const checks = pgTable(
@@ -28,7 +29,10 @@ export const checks = pgTable(
   },
   table => [
     index('checks_monitor_id_checked_at_idx').on(table.monitorId, table.checkedAt),
-    check('checks_status_code_check', sql`${table.statusCode} BETWEEN 100 AND 599`),
+    check(
+      'checks_status_code_check',
+      sql`${table.statusCode} BETWEEN ${sql.raw(String(MIN_HTTP_STATUS_CODE))} AND ${sql.raw(String(MAX_HTTP_STATUS_CODE))}`,
+    ),
     check('checks_response_time_ms_check', sql`${table.responseTimeMs} >= 0`),
   ],
 );

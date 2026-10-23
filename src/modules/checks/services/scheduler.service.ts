@@ -1,6 +1,7 @@
 import { BeforeApplicationShutdown, Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 
+import { getErrorStack } from '../../../common/utils/get-error-stack.util.js';
 import { runWithConcurrency } from '../../../common/utils/run-with-concurrency.util.js';
 import {
   CHECK_CONCURRENCY,
@@ -21,7 +22,7 @@ export class SchedulerService implements BeforeApplicationShutdown {
     private readonly checksService: ChecksService,
   ) {}
 
-  async beforeApplicationShutdown() {
+  async beforeApplicationShutdown(): Promise<void> {
     this.isShuttingDown = true;
 
     if (this.currentTick) {
@@ -63,7 +64,7 @@ export class SchedulerService implements BeforeApplicationShutdown {
         `Checked ${monitors.length} monitors: ${up} up, ${down} down, ${failed} failed`,
       );
     } catch (error) {
-      this.logger.error('Scheduler tick failed', error instanceof Error ? error.stack : error);
+      this.logger.error('Scheduler tick failed', getErrorStack(error));
     }
   }
 }

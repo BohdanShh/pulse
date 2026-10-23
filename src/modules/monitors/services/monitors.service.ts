@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
+import { NothingToUpdateException } from '../../../common/exceptions/nothing-to-update.exception.js';
 import { CreateMonitorDto } from '../dtos/create-monitor.dto.js';
 import { UpdateMonitorDto } from '../dtos/update-monitor.dto.js';
 import { Monitor } from '../entities/monitor.entity.js';
@@ -30,7 +31,7 @@ export class MonitorsService {
 
   async update(id: string, dto: UpdateMonitorDto): Promise<Monitor> {
     if (Object.keys(dto).length === 0) {
-      throw new BadRequestException('Nothing to update');
+      throw new NothingToUpdateException();
     }
 
     const monitor = await this.monitorsRepository.update(id, dto);

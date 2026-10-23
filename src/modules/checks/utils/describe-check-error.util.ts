@@ -2,11 +2,12 @@ import {
   NETWORK_ERROR_MESSAGES,
   TIMEOUT_ERROR_CODES,
   TLS_ERROR_CODE_PATTERN,
+  UNKNOWN_CHECK_ERROR_MESSAGE,
 } from '../constants/checker.constant.js';
 import { timeoutErrorMessage, tlsErrorMessage } from './check-error-message.util.js';
 
 export function describeCheckError(error: unknown): string {
-  if (!(error instanceof Error)) return 'Unknown error';
+  if (!(error instanceof Error)) return UNKNOWN_CHECK_ERROR_MESSAGE;
   if (error.name === 'TimeoutError') return timeoutErrorMessage();
 
   const cause = error.cause as { code?: string; message?: string } | undefined;

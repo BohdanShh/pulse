@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
+import { getErrorMessage } from '../common/utils/get-error-message.util.js';
 import { type AppConfigService } from '../config/env.config.js';
 import * as schema from './schema/index.js';
 
@@ -25,7 +26,7 @@ export type Database = NodePgDatabase<typeof schema>;
           await pool.query('SELECT 1');
         } catch (error) {
           await pool.end();
-          throw new Error(`Cannot connect to the database: ${(error as Error).message}`);
+          throw new Error(`Cannot connect to the database: ${getErrorMessage(error)}`);
         }
 
         return pool;
@@ -42,7 +43,7 @@ export type Database = NodePgDatabase<typeof schema>;
 export class DatabaseModule implements OnApplicationShutdown {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
-  async onApplicationShutdown() {
+  async onApplicationShutdown(): Promise<void> {
     await this.pool.end();
   }
 }

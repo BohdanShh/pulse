@@ -14,4 +14,6 @@ export const NETWORK_ERROR_MESSAGES: Record<string, string> = {
 
 export const TIMEOUT_ERROR_CODES = ['UND_ERR_CONNECT_TIMEOUT'];
 
+export const UNKNOWN_CHECK_ERROR_MESSAGE = 'Unknown error';
+
 export const TLS_ERROR_CODE_PATTERN = /CERT|SSL|TLS|SELF_SIGNED|UNABLE_TO_VERIFY/;

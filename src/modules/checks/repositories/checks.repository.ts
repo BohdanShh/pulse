@@ -2,12 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { and, desc, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm';
 
+import { type LimitOffset } from '../../../common/pagination/types/limit-offset.type.js';
+import { type PageResult } from '../../../common/pagination/types/page-result.type.js';
 import { DB, type Database } from '../../../database/database.module.js';
 import { checks, monitors } from '../../../database/schema/index.js';
-import { Monitor, type MonitorStatus } from '../../monitors/entities/monitor.entity.js';
+import { Monitor } from '../../monitors/entities/monitor.entity.js';
 import { RESPONSE_TIME_PERCENTILE } from '../constants/stats.constant.js';
 import { Check } from '../entities/check.entity.js';
 import { type CheckResult } from '../types/check-result.type.js';
+import { type CheckStats } from '../types/check-stats.type.js';
+import { type RecordCheckOptions } from '../types/record-check-options.type.js';
 
 const checkColumns = {
   id: checks.id,
@@ -60,7 +64,7 @@ export class ChecksRepository {
   recordCheck(
     monitorId: string,
     result: CheckResult,
-    { status, checkedAt }: { status: MonitorStatus; checkedAt: Date },
+    { status, checkedAt }: RecordCheckOptions,
   ): Promise<Check> {
     return this.db.transaction(async tx => {
       const [check] = await tx
@@ -79,8 +83,8 @@ export class ChecksRepository {
 
   async findPageByMonitor(
     monitorId: string,
-    { limit, offset }: { limit: number; offset: number },
-  ): Promise<{ items: Check[]; all: number }> {
+    { limit, offset }: LimitOffset,
+  ): Promise<PageResult<Check>> {
     const byMonitor = eq(checks.monitorId, monitorId);
 
     const [items, all] = await Promise.all([
@@ -97,7 +101,7 @@ export class ChecksRepository {
     return { items, all };
   }
 
-  async getStats(monitorId: string, from: Date) {
+  async getStats(monitorId: string, from: Date): Promise<CheckStats> {
     const [stats] = await this.db
       .select(statsColumns)
       .from(checks)
