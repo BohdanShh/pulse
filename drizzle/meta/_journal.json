@@ -8,6 +8,13 @@
       "when": 1792783592911,
       "tag": "0000_create_monitors",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792786918731,
+      "tag": "0001_create_checks",
+      "breakpoints": true
     }
   ]
 }
