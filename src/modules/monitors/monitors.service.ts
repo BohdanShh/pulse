@@ -2,8 +2,8 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 
 import { eq } from 'drizzle-orm';
 
-import { DB, type Database } from '../database/database.module.js';
-import { monitors } from '../database/schema.js';
+import { DB, type Database } from '../../database/database.module.js';
+import { monitors } from '../../database/schema.js';
 import { CreateMonitorDto } from './dto/create-monitor.dto.js';
 import { UpdateMonitorDto } from './dto/update-monitor.dto.js';
 import { Monitor } from './entities/monitor.entity.js';

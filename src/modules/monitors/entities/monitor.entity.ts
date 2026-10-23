@@ -1,4 +1,4 @@
-import { httpMethod, monitors } from '../../database/schema.js';
+import { httpMethod, monitors } from '../../../database/schema.js';
 
 export type HttpMethod = (typeof httpMethod.enumValues)[number];
 

@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 
-import { httpMethod } from '../../database/schema.js';
+import { httpMethod } from '../../../database/schema.js';
 import { type HttpMethod } from '../entities/monitor.entity.js';
 
 export class CreateMonitorDto {
