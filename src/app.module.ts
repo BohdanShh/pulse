@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { validateEnv } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
+import { ChecksModule } from './modules/checks/checks.module.js';
 import { MonitorsModule } from './modules/monitors/monitors.module.js';
 
 @Module({
@@ -10,6 +11,7 @@ import { MonitorsModule } from './modules/monitors/monitors.module.js';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     DatabaseModule,
     MonitorsModule,
+    ChecksModule,
   ],
 })
 export class AppModule {}
