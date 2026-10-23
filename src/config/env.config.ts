@@ -18,6 +18,12 @@ export class EnvironmentVariables {
     message: 'DATABASE_URL must start with postgres:// or postgresql://',
   })
   DATABASE_URL: string;
+
+  @IsString()
+  @Matches(/^\d+:[\w-]+$/, {
+    message: 'TELEGRAM_BOT_TOKEN must look like 123456789:ABC... (get it from @BotFather)',
+  })
+  TELEGRAM_BOT_TOKEN: string;
 }
 
 export type AppConfigService = ConfigService<EnvironmentVariables, true>;

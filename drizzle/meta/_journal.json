@@ -22,6 +22,13 @@
       "when": 1792789363139,
       "tag": "0002_add_monitor_status",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792795334536,
+      "tag": "0003_create_users",
+      "breakpoints": true
     }
   ]
 }
