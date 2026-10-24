@@ -8,6 +8,12 @@ export class Monitor implements MonitorRow {
   /** @example "b0a4eef9-6aeb-4000-bb7a-a833e5f4b501" */
   id: string;
 
+  /**
+   * Owner of the monitor.
+   * @example "3f2b8c1e-6a4d-4b7e-9c2a-1d5e8f7a6b90"
+   */
+  userId: string;
+
   /** @example "GitHub API" */
   name: string;
 

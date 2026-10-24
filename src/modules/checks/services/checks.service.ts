@@ -22,8 +22,8 @@ export class ChecksService {
     private readonly monitorsService: MonitorsService,
   ) {}
 
-  async runCheck(monitorId: string): Promise<Check> {
-    const monitor = await this.monitorsService.findOne(monitorId);
+  async runCheck(monitorId: string, userId: string): Promise<Check> {
+    const monitor = await this.monitorsService.findOne(monitorId, userId);
     return this.checkMonitor(monitor);
   }
 
@@ -37,8 +37,12 @@ export class ChecksService {
     });
   }
 
-  async findByMonitor(monitorId: string, query: PaginationQueryDto): Promise<ChecksPageDto> {
-    await this.monitorsService.findOne(monitorId);
+  async findByMonitor(
+    monitorId: string,
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<ChecksPageDto> {
+    await this.monitorsService.findOne(monitorId, userId);
 
     const { items, all } = await this.checksRepository.findPageByMonitor(
       monitorId,
@@ -48,8 +52,8 @@ export class ChecksService {
     return { items, metadata: buildPaginationMetadata(query, all) };
   }
 
-  async getStats(monitorId: string, query: StatsQueryDto): Promise<StatsDto> {
-    await this.monitorsService.findOne(monitorId);
+  async getStats(monitorId: string, userId: string, query: StatsQueryDto): Promise<StatsDto> {
+    await this.monitorsService.findOne(monitorId, userId);
 
     const period = query.period ?? DEFAULT_STATS_PERIOD;
     const from = new Date(Date.now() - STATS_PERIODS[period]);

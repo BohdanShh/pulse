@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { User } from '../users/entities/user.entity.js';
 import { CreateMonitorDto } from './dtos/create-monitor.dto.js';
 import { UpdateMonitorDto } from './dtos/update-monitor.dto.js';
 import { Monitor } from './entities/monitor.entity.js';
@@ -24,32 +26,36 @@ export class MonitorsController {
 
   /** Create a monitor */
   @Post()
-  create(@Body() dto: CreateMonitorDto): Promise<Monitor> {
-    return this.monitorsService.create(dto);
+  create(@CurrentUser() user: User, @Body() dto: CreateMonitorDto): Promise<Monitor> {
+    return this.monitorsService.create(user.id, dto);
   }
 
-  /** List all monitors */
+  /** List your monitors */
   @Get()
-  findAll(): Promise<Monitor[]> {
-    return this.monitorsService.findAll();
+  findAll(@CurrentUser() user: User): Promise<Monitor[]> {
+    return this.monitorsService.findAll(user.id);
   }
 
   /** Get a monitor by ID */
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Monitor> {
-    return this.monitorsService.findOne(id);
+  findOne(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string): Promise<Monitor> {
+    return this.monitorsService.findOne(id, user.id);
   }
 
   /** Update a monitor (only the fields that are sent) */
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMonitorDto): Promise<Monitor> {
-    return this.monitorsService.update(id, dto);
+  update(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateMonitorDto,
+  ): Promise<Monitor> {
+    return this.monitorsService.update(id, user.id, dto);
   }
 
   /** Delete a monitor */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.monitorsService.remove(id);
+  remove(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.monitorsService.remove(id, user.id);
   }
 }
