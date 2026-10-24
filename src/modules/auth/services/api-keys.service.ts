@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
+import { User } from '../../users/entities/user.entity.js';
 import { ApiKeysRepository } from '../repositories/api-keys.repository.js';
 import { generateApiKey } from '../utils/generate-api-key.util.js';
+import { hashApiKey } from '../utils/hash-api-key.util.js';
 
 @Injectable()
 export class ApiKeysService {
@@ -15,5 +17,9 @@ export class ApiKeysService {
 
   revoke(userId: string): Promise<boolean> {
     return this.apiKeysRepository.revokeActive(userId);
+  }
+
+  authenticate(key: string): Promise<User | undefined> {
+    return this.apiKeysRepository.touchActiveAndFindUser(hashApiKey(key));
   }
 }

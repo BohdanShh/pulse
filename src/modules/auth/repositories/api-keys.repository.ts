@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 
 import { DB, type Database } from '../../../database/database.module.js';
-import { apiKeys } from '../../../database/schema/index.js';
+import { apiKeys, users } from '../../../database/schema/index.js';
+import { User } from '../../users/entities/user.entity.js';
 import { type NewApiKey } from '../types/new-api-key.type.js';
 
 @Injectable()
@@ -32,5 +33,18 @@ export class ApiKeysRepository {
       .returning({ id: apiKeys.id });
 
     return revoked.length > 0;
+  }
+
+  async touchActiveAndFindUser(keyHash: string): Promise<User | undefined> {
+    const [user] = await this.db
+      .update(apiKeys)
+      .set({ lastUsedAt: new Date() })
+      .from(users)
+      .where(
+        and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt), eq(users.id, apiKeys.userId)),
+      )
+      .returning(getTableColumns(users));
+
+    return user;
   }
 }
