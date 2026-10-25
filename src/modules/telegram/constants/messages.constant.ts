@@ -25,3 +25,14 @@ export const REMOVE_USAGE_MESSAGE = [
   '/remove 2',
   '```',
 ].join('\n');
+
+/** MarkdownV2, see ADD_USAGE_MESSAGE. */
+export const STATUS_USAGE_MESSAGE = [
+  'To see a monitor status, send /status followed by its number from /list:',
+  '```bash',
+  '/status 1',
+  '```',
+].join('\n');
+
+export const HELP_INTRO_MESSAGE =
+  'Pulse checks your URLs and tells you here when they go down or recover.';

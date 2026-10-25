@@ -11,5 +11,6 @@ import { SchedulerService } from './services/scheduler.service.js';
   imports: [MonitorsModule],
   controllers: [ChecksController],
   providers: [ChecksService, CheckerService, ChecksRepository, SchedulerService],
+  exports: [ChecksService],
 })
 export class ChecksModule {}
