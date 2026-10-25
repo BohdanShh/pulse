@@ -14,6 +14,7 @@ import { REPLY_OPTIONS } from '../constants/telegram.constant.js';
 import { TelegramBotService } from '../services/telegram-bot.service.js';
 import { type BotContext } from '../types/bot-context.type.js';
 import { escapeHtml } from '../utils/escape-html.util.js';
+import { formatDuration } from '../utils/format-duration.util.js';
 
 const STATUS_EMOJI: Record<MonitorStatus, string> = { UP: '🟢', DOWN: '🔴', PENDING: '⏳' };
 
@@ -113,19 +114,9 @@ export class MonitorCommands implements OnModuleInit {
     const { name, status, method, url, intervalSeconds, lastCheckedAt } = monitor;
     const stats = await this.checksService.getStats(monitor.id, ctx.user.id, { period: '24h' });
 
-    let lastCheck = 'not checked yet';
-    if (lastCheckedAt) {
-      const seconds = Math.floor((Date.now() - lastCheckedAt.getTime()) / 1000);
-      const ago =
-        seconds < 60
-          ? `${seconds}s`
-          : seconds < 3600
-            ? `${Math.floor(seconds / 60)}m`
-            : seconds < 86400
-              ? `${Math.floor(seconds / 3600)}h`
-              : `${Math.floor(seconds / 86400)}d`;
-      lastCheck = `last check ${ago} ago`;
-    }
+    const lastCheck = lastCheckedAt
+      ? `last check ${formatDuration(Date.now() - lastCheckedAt.getTime())} ago`
+      : 'not checked yet';
 
     const message = [
       `${STATUS_EMOJI[status]} <b>${escapeHtml(name)}</b> — ${status}`,
