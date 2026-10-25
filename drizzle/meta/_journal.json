@@ -43,6 +43,13 @@
       "when": 1792876393988,
       "tag": "0005_add_monitor_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792958960061,
+      "tag": "0006_add_monitor_consecutive_failures",
+      "breakpoints": true
     }
   ]
 }

@@ -29,8 +29,17 @@ export class Monitor implements MonitorRow {
    */
   intervalSeconds: number;
 
-  /** PENDING until the first check, then UP or DOWN based on the last check. */
+  /**
+   * PENDING until the first successful check or 3 failed checks in a row.
+   * Becomes DOWN after 3 failed checks in a row and UP again after one successful check.
+   */
   status: MonitorStatus;
+
+  /**
+   * Failed checks in a row since the last successful one.
+   * @example 0
+   */
+  consecutiveFailures: number;
 
   /** When the monitor was last checked. Null if it has never been checked. */
   lastCheckedAt: Date | null;

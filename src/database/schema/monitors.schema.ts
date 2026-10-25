@@ -24,6 +24,7 @@ export const monitors = pgTable(
     method: httpMethod().notNull().default('GET'),
     intervalSeconds: integer('interval_seconds').notNull().default(DEFAULT_INTERVAL_SECONDS),
     status: monitorStatus().notNull().default('PENDING'),
+    consecutiveFailures: integer('consecutive_failures').notNull().default(0),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

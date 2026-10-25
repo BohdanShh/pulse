@@ -61,7 +61,11 @@ export class ChecksRepository {
   recordCheck(
     monitorId: string,
     result: CheckResult,
-    { status, checkedAt }: { status: MonitorStatus; checkedAt: Date },
+    {
+      status,
+      consecutiveFailures,
+      checkedAt,
+    }: { status: MonitorStatus; consecutiveFailures: number; checkedAt: Date },
   ): Promise<Check> {
     return this.db.transaction(async tx => {
       const [check] = await tx
@@ -71,7 +75,7 @@ export class ChecksRepository {
 
       await tx
         .update(monitors)
-        .set({ status, lastCheckedAt: checkedAt })
+        .set({ status, consecutiveFailures, lastCheckedAt: checkedAt })
         .where(eq(monitors.id, monitorId));
 
       return check;

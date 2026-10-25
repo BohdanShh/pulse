@@ -35,10 +35,15 @@ export class ChecksService {
   async checkMonitor(monitor: Monitor): Promise<Check> {
     const checkedAt = new Date();
     const result = await this.checkerService.check(monitor);
-    const status = result.ok ? 'UP' : 'DOWN';
+    const consecutiveFailures = result.ok ? 0 : monitor.consecutiveFailures + 1;
+
+    // One success is enough to be UP; DOWN needs 3 failures in a row, so a single blip
+    // neither flips the status nor sends an alert. Until then the status stays as it was.
+    const status = result.ok ? 'UP' : consecutiveFailures >= 3 ? 'DOWN' : monitor.status;
 
     const check = await this.checksRepository.recordCheck(monitor.id, result, {
       status,
+      consecutiveFailures,
       checkedAt,
     });
 
