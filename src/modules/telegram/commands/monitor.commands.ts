@@ -8,6 +8,7 @@ import { getValidationMessages } from '../../../common/utils/get-validation-mess
 import { ChecksService } from '../../checks/services/checks.service.js';
 import { CreateMonitorDto } from '../../monitors/dtos/create-monitor.dto.js';
 import { Monitor } from '../../monitors/entities/monitor.entity.js';
+import { MonitorLimitReachedException } from '../../monitors/exceptions/monitor-limit-reached.exception.js';
 import { MonitorsService } from '../../monitors/services/monitors.service.js';
 import { type MonitorStatus } from '../../monitors/types/monitor-status.type.js';
 import { REPLY_OPTIONS } from '../constants/telegram.constant.js';
@@ -63,7 +64,18 @@ export class MonitorCommands implements OnModuleInit {
       return;
     }
 
-    const monitor = await this.monitorsService.create(ctx.user.id, dto);
+    let monitor: Monitor;
+    try {
+      monitor = await this.monitorsService.create(ctx.user.id, dto);
+    } catch (error) {
+      if (!(error instanceof MonitorLimitReachedException)) throw error;
+
+      await ctx.reply(
+        `🚫 <b>Monitor limit reached</b>\nYou can have up to ${error.limit} monitors. Send /remove to free a slot.`,
+        REPLY_OPTIONS,
+      );
+      return;
+    }
 
     const message = [
       '✅ <b>Monitor added</b>',

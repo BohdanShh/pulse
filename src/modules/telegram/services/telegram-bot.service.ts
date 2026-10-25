@@ -36,8 +36,14 @@ export class TelegramBotService implements OnApplicationBootstrap, BeforeApplica
       await next();
     });
 
-    this.bot.catch(({ error, ctx }) => {
+    this.bot.catch(async ({ error, ctx }) => {
       this.logger.error(`Failed to handle update ${ctx.update.update_id}`, getErrorStack(error));
+
+      try {
+        await ctx.reply('⚠️ Something went wrong. Please try again in a moment.');
+      } catch {
+        // already logged above
+      }
     });
   }
 

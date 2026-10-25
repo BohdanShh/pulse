@@ -4,6 +4,7 @@ import { NothingToUpdateException } from '../../../common/exceptions/nothing-to-
 import { CreateMonitorDto } from '../dtos/create-monitor.dto.js';
 import { UpdateMonitorDto } from '../dtos/update-monitor.dto.js';
 import { Monitor } from '../entities/monitor.entity.js';
+import { MonitorLimitReachedException } from '../exceptions/monitor-limit-reached.exception.js';
 import { MonitorNotFoundException } from '../exceptions/monitor-not-found.exception.js';
 import { MonitorsRepository } from '../repositories/monitors.repository.js';
 
@@ -11,7 +12,14 @@ import { MonitorsRepository } from '../repositories/monitors.repository.js';
 export class MonitorsService {
   constructor(private readonly monitorsRepository: MonitorsRepository) {}
 
-  create(userId: string, dto: CreateMonitorDto): Promise<Monitor> {
+  async create(userId: string, dto: CreateMonitorDto): Promise<Monitor> {
+    // Keeps the scheduler load per user bounded and /list within Telegram's 4096-char message limit
+    const limit = 20;
+
+    if ((await this.monitorsRepository.countByUser(userId)) >= limit) {
+      throw new MonitorLimitReachedException(limit);
+    }
+
     return this.monitorsRepository.create(userId, dto);
   }
 

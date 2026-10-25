@@ -22,6 +22,10 @@ export class MonitorsRepository {
     return monitor;
   }
 
+  countByUser(userId: string): Promise<number> {
+    return this.db.$count(monitors, eq(monitors.userId, userId));
+  }
+
   findAllByUser(userId: string): Promise<Monitor[]> {
     return this.db
       .select()
