@@ -25,6 +25,10 @@ bun run db:studio
 - Starting the app also starts Telegram long polling. Never run a second instance (e.g. `node dist/main` next to `start:dev`) with the same token — Telegram returns 409 and one poller stops.
 - `drizzle.config.ts` reads `.env` via `process.loadEnvFile()`. Migrations have descriptive names (`0004_create_api_keys.sql`) — pass `--name <name>` to `db:generate`, and review the generated SQL before migrating.
 
+## Code style
+
+- A constant, type or helper used in only one place is written where it is used (inline value or object type, or a private method), not extracted. Move it to `constants/` · `types/` · `utils/` only when a second place needs it; a value used several times in one file is a file-local `const`. `src/common/` and `src/database/constants/` stay extracted. Comment inline values whose meaning is not obvious.
+
 ## Architecture
 
 One NestJS app (`src/main.ts` → `AppModule`) serves REST + Swagger, runs the background checker, and runs the Telegram bot in the same process.

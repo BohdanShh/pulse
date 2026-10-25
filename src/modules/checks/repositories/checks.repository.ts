@@ -7,11 +7,9 @@ import { type PageResult } from '../../../common/pagination/types/page-result.ty
 import { DB, type Database } from '../../../database/database.module.js';
 import { checks, monitors } from '../../../database/schema/index.js';
 import { Monitor } from '../../monitors/entities/monitor.entity.js';
-import { RESPONSE_TIME_PERCENTILE } from '../constants/stats.constant.js';
+import { type MonitorStatus } from '../../monitors/types/monitor-status.type.js';
 import { Check } from '../entities/check.entity.js';
 import { type CheckResult } from '../types/check-result.type.js';
-import { type CheckStats } from '../types/check-stats.type.js';
-import { type RecordCheckOptions } from '../types/record-check-options.type.js';
 
 const checkColumns = {
   id: checks.id,
@@ -24,10 +22,9 @@ const checkColumns = {
 
 const onlyOk = sql`filter (where ${checks.ok})`;
 const onlyFailed = sql`filter (where not ${checks.ok})`;
-const percentile = sql.raw(String(RESPONSE_TIME_PERCENTILE));
 
 const avgResponseTime = sql`round(avg(${checks.responseTimeMs}) ${onlyOk})`;
-const percentileResponseTime = sql`round(percentile_cont(${percentile}) within group (order by ${checks.responseTimeMs}) ${onlyOk})`;
+const percentileResponseTime = sql`round(percentile_cont(0.95) within group (order by ${checks.responseTimeMs}) ${onlyOk})`;
 
 const isDue = or(
   isNull(monitors.lastCheckedAt),
@@ -64,7 +61,7 @@ export class ChecksRepository {
   recordCheck(
     monitorId: string,
     result: CheckResult,
-    { status, checkedAt }: RecordCheckOptions,
+    { status, checkedAt }: { status: MonitorStatus; checkedAt: Date },
   ): Promise<Check> {
     return this.db.transaction(async tx => {
       const [check] = await tx
@@ -101,7 +98,15 @@ export class ChecksRepository {
     return { items, all };
   }
 
-  async getStats(monitorId: string, from: Date): Promise<CheckStats> {
+  async getStats(
+    monitorId: string,
+    from: Date,
+  ): Promise<{
+    checks: number;
+    failures: number;
+    avgResponseTimeMs: number | null;
+    p95ResponseTimeMs: number | null;
+  }> {
     const [stats] = await this.db
       .select(statsColumns)
       .from(checks)

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
+import { randomBytes } from 'node:crypto';
+
 import { User } from '../../users/entities/user.entity.js';
 import { ApiKeysRepository } from '../repositories/api-keys.repository.js';
-import { generateApiKey } from '../utils/generate-api-key.util.js';
 import { hashApiKey } from '../utils/hash-api-key.util.js';
 
 @Injectable()
@@ -10,8 +11,14 @@ export class ApiKeysService {
   constructor(private readonly apiKeysRepository: ApiKeysRepository) {}
 
   async issue(userId: string): Promise<string> {
-    const { key, keyHash, prefix } = generateApiKey();
-    await this.apiKeysRepository.replaceActiveKey(userId, { keyHash, prefix });
+    const key = 'pulse_' + randomBytes(32).toString('base64url');
+
+    // The key itself is never stored: only its hash, plus a short prefix to recognise it by
+    await this.apiKeysRepository.replaceActiveKey(userId, {
+      keyHash: hashApiKey(key),
+      prefix: key.slice(0, 12),
+    });
+
     return key;
   }
 

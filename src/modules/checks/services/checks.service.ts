@@ -11,7 +11,6 @@ import { StatsQueryDto } from '../dtos/stats-query.dto.js';
 import { StatsDto } from '../dtos/stats.dto.js';
 import { Check } from '../entities/check.entity.js';
 import { ChecksRepository } from '../repositories/checks.repository.js';
-import { calculateUptimePercent } from '../utils/calculate-uptime.util.js';
 import { CheckerService } from './checker.service.js';
 
 @Injectable()
@@ -59,12 +58,12 @@ export class ChecksService {
     const from = new Date(Date.now() - STATS_PERIODS[period]);
 
     const stats = await this.checksRepository.getStats(monitorId, from);
+    const { checks, failures } = stats;
 
-    return {
-      period,
-      from,
-      ...stats,
-      uptimePercent: calculateUptimePercent(stats.checks, stats.failures),
-    };
+    // Rounded to 2 decimals; null when there are no checks to divide by
+    const uptimePercent =
+      checks === 0 ? null : Math.round(((checks - failures) / checks) * 100 * 100) / 100;
+
+    return { period, from, ...stats, uptimePercent };
   }
 }

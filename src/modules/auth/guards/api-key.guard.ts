@@ -3,7 +3,6 @@ import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/com
 import { InvalidApiKeyException } from '../exceptions/invalid-api-key.exception.js';
 import { ApiKeysService } from '../services/api-keys.service.js';
 import { type AuthenticatedRequest } from '../types/authenticated-request.type.js';
-import { extractBearerToken } from '../utils/extract-bearer-token.util.js';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
@@ -11,9 +10,9 @@ export class ApiKeyGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const key = extractBearerToken(request.headers.authorization);
+    const [scheme, key] = request.headers.authorization?.split(' ') ?? [];
 
-    const user = key && (await this.apiKeysService.authenticate(key));
+    const user = scheme === 'Bearer' && key && (await this.apiKeysService.authenticate(key));
 
     if (!user) {
       throw new InvalidApiKeyException();

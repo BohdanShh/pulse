@@ -3,11 +3,6 @@ import { Interval } from '@nestjs/schedule';
 
 import { getErrorStack } from '../../../common/utils/get-error-stack.util.js';
 import { runWithConcurrency } from '../../../common/utils/run-with-concurrency.util.js';
-import {
-  CHECK_CONCURRENCY,
-  CLAIM_BATCH_SIZE,
-  SCHEDULER_TICK_MS,
-} from '../constants/scheduler.constant.js';
 import { ChecksRepository } from '../repositories/checks.repository.js';
 import { ChecksService } from './checks.service.js';
 
@@ -31,7 +26,7 @@ export class SchedulerService implements BeforeApplicationShutdown {
     }
   }
 
-  @Interval(SCHEDULER_TICK_MS)
+  @Interval(10_000)
   tick(): Promise<void> | void {
     if (this.isShuttingDown) return;
 
@@ -49,10 +44,10 @@ export class SchedulerService implements BeforeApplicationShutdown {
 
   private async checkDueMonitors(): Promise<void> {
     try {
-      const monitors = await this.checksRepository.claimDueMonitors(CLAIM_BATCH_SIZE);
+      const monitors = await this.checksRepository.claimDueMonitors(50);
       if (monitors.length === 0) return;
 
-      const results = await runWithConcurrency(monitors, CHECK_CONCURRENCY, monitor =>
+      const results = await runWithConcurrency(monitors, 10, monitor =>
         this.checksService.checkMonitor(monitor),
       );
 

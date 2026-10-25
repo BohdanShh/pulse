@@ -5,7 +5,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module.js';
 import { type AppConfigService } from './config/env.config.js';
-import { SWAGGER_AUTH_NAME } from './modules/auth/constants/auth.constant.js';
+
+const SWAGGER_AUTH_NAME = 'apiKey';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

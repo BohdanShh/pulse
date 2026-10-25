@@ -8,5 +8,3 @@ export const STATS_PERIODS = {
 } as const;
 
 export const DEFAULT_STATS_PERIOD = '24h' satisfies keyof typeof STATS_PERIODS;
-
-export const RESPONSE_TIME_PERCENTILE = 0.95;

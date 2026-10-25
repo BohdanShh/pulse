@@ -5,7 +5,6 @@ import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { DB, type Database } from '../../../database/database.module.js';
 import { apiKeys, users } from '../../../database/schema/index.js';
 import { User } from '../../users/entities/user.entity.js';
-import { type NewApiKey } from '../types/new-api-key.type.js';
 
 @Injectable()
 export class ApiKeysRepository {
@@ -13,7 +12,7 @@ export class ApiKeysRepository {
 
   replaceActiveKey(
     userId: string,
-    { keyHash, prefix }: Pick<NewApiKey, 'keyHash' | 'prefix'>,
+    { keyHash, prefix }: { keyHash: string; prefix: string },
   ): Promise<void> {
     return this.db.transaction(async tx => {
       await tx
