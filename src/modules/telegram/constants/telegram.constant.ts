@@ -1,9 +1,5 @@
-import { type StatsPeriod } from '../../checks/types/stats-period.type.js';
-import { type MonitorStatus } from '../../monitors/types/monitor-status.type.js';
-import { type BotCommand } from '../types/bot-command.type.js';
-
-/** The bot menu and /help are both built from this list. */
-export const BOT_COMMANDS: BotCommand[] = [
+/** The bot menu and /help are both built from this list. `args` is shown only in /help. */
+export const BOT_COMMANDS: { command: string; description: string; args?: string }[] = [
   { command: 'start', description: 'Start using Pulse' },
   { command: 'help', description: 'Show available commands' },
   { command: 'add', args: '<url> [name]', description: 'Start monitoring a URL' },
@@ -14,21 +10,12 @@ export const BOT_COMMANDS: BotCommand[] = [
   { command: 'revoke', description: 'Revoke your REST API key' },
 ];
 
-export const POLLING_CONFLICT_ERROR_CODE = 409;
-
 /**
  * Options for every bot reply: HTML formatting, and no link previews
  * (Telegram would otherwise fetch monitored URLs to build one, e.g. a JSON file card).
+ * User input in a reply must go through escapeHtml().
  */
 export const REPLY_OPTIONS = {
   parse_mode: 'HTML',
   link_preview_options: { is_disabled: true },
 } as const;
-
-export const MONITOR_STATUS_EMOJI: Record<MonitorStatus, string> = {
-  UP: '🟢',
-  DOWN: '🔴',
-  PENDING: '⏳',
-};
-
-export const STATUS_STATS_PERIOD = '24h' satisfies StatsPeriod;

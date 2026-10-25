@@ -4,77 +4,37 @@ import {
   Injectable,
   Logger,
   OnApplicationBootstrap,
-  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { Bot, type CommandContext, type Context, GrammyError } from 'grammy';
+import { Bot, GrammyError } from 'grammy';
 
 import { getErrorStack } from '../../../common/utils/get-error-stack.util.js';
-import { getValidationMessages } from '../../../common/utils/get-validation-messages.util.js';
 import { type AppConfigService } from '../../../config/env.config.js';
-import { ApiKeysService } from '../../auth/services/api-keys.service.js';
-import { ChecksService } from '../../checks/services/checks.service.js';
-import { CreateMonitorDto } from '../../monitors/dtos/create-monitor.dto.js';
-import { Monitor } from '../../monitors/entities/monitor.entity.js';
-import { MonitorsService } from '../../monitors/services/monitors.service.js';
-import { User } from '../../users/entities/user.entity.js';
 import { UsersService } from '../../users/services/users.service.js';
-import {
-  ADD_USAGE_MESSAGE,
-  API_KEY_REVOKED_MESSAGE,
-  NO_ACTIVE_API_KEY_MESSAGE,
-  NO_MONITORS_MESSAGE,
-  REMOVE_USAGE_MESSAGE,
-  STATUS_USAGE_MESSAGE,
-} from '../constants/messages.constant.js';
-import {
-  BOT_COMMANDS,
-  POLLING_CONFLICT_ERROR_CODE,
-  REPLY_OPTIONS,
-  STATUS_STATS_PERIOD,
-} from '../constants/telegram.constant.js';
-import { apiKeyIssuedMessage } from '../utils/api-key-issued-message.util.js';
-import { helpMessage } from '../utils/help-message.util.js';
-import { invalidMonitorMessage } from '../utils/invalid-monitor-message.util.js';
-import { monitorAddedMessage } from '../utils/monitor-added-message.util.js';
-import { monitorListMessage } from '../utils/monitor-list-message.util.js';
-import { monitorNumberNotFoundMessage } from '../utils/monitor-number-not-found-message.util.js';
-import { monitorRemovedMessage } from '../utils/monitor-removed-message.util.js';
-import { monitorStatusMessage } from '../utils/monitor-status-message.util.js';
-import { parseAddCommandArgs } from '../utils/parse-add-command-args.util.js';
-import { parseMonitorNumber } from '../utils/parse-monitor-number.util.js';
-import { toTelegramProfile } from '../utils/to-telegram-profile.util.js';
-import { welcomeMessage } from '../utils/welcome-message.util.js';
+import { BOT_COMMANDS } from '../constants/telegram.constant.js';
+import { type BotContext } from '../types/bot-context.type.js';
 
+/** Owns the bot instance and its lifecycle. Commands are registered by the *Commands classes. */
 @Injectable()
-export class TelegramBotService
-  implements OnModuleInit, OnApplicationBootstrap, BeforeApplicationShutdown
-{
+export class TelegramBotService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly logger = new Logger(TelegramBotService.name);
-  private readonly bot: Bot;
+  readonly bot: Bot<BotContext>;
 
-  constructor(
-    @Inject(ConfigService) config: AppConfigService,
-    private readonly usersService: UsersService,
-    private readonly apiKeysService: ApiKeysService,
-    private readonly monitorsService: MonitorsService,
-    private readonly checksService: ChecksService,
-  ) {
-    this.bot = new Bot(config.get('TELEGRAM_BOT_TOKEN', { infer: true }));
-  }
+  constructor(@Inject(ConfigService) config: AppConfigService, usersService: UsersService) {
+    this.bot = new Bot<BotContext>(config.get('TELEGRAM_BOT_TOKEN', { infer: true }));
 
-  onModuleInit(): void {
-    this.bot.command('start', ctx => this.handleStart(ctx));
-    this.bot.command('help', ctx => ctx.reply(helpMessage(BOT_COMMANDS), REPLY_OPTIONS));
-    this.bot.command('apikey', ctx => this.handleApiKey(ctx));
-    this.bot.command('revoke', ctx => this.handleRevoke(ctx));
-    this.bot.command('add', ctx => this.handleAdd(ctx));
-    this.bot.command('list', ctx => this.handleList(ctx));
-    this.bot.command('status', ctx => this.handleStatus(ctx));
-    this.bot.command('remove', ctx => this.handleRemove(ctx));
+    // Runs before every command handler (they are registered later, in onModuleInit)
+    this.bot.use(async (ctx, next) => {
+      if (!ctx.from) return;
+
+      ctx.user = await usersService.findOrCreateFromTelegram({
+        telegramId: ctx.from.id,
+        username: ctx.from.username ?? null,
+        firstName: ctx.from.first_name,
+      });
+      await next();
+    });
 
     this.bot.catch(({ error, ctx }) => {
       this.logger.error(`Failed to handle update ${ctx.update.update_id}`, getErrorStack(error));
@@ -92,7 +52,7 @@ export class TelegramBotService
         onStart: ({ username }) => this.logger.log(`Bot @${username} is polling for updates`),
       })
       .catch((error: unknown) => {
-        if (error instanceof GrammyError && error.error_code === POLLING_CONFLICT_ERROR_CODE) {
+        if (error instanceof GrammyError && error.error_code === 409) {
           this.logger.error('Another process is already polling with this bot token');
           return;
         }
@@ -102,113 +62,5 @@ export class TelegramBotService
 
   async beforeApplicationShutdown(): Promise<void> {
     await this.bot.stop();
-  }
-
-  private async handleStart(ctx: Context): Promise<void> {
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    await ctx.reply(welcomeMessage(user.firstName), REPLY_OPTIONS);
-  }
-
-  private async handleApiKey(ctx: Context): Promise<void> {
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const key = await this.apiKeysService.issue(user.id);
-    await ctx.reply(apiKeyIssuedMessage(key), REPLY_OPTIONS);
-  }
-
-  private async handleRevoke(ctx: Context): Promise<void> {
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const revoked = await this.apiKeysService.revoke(user.id);
-    await ctx.reply(revoked ? API_KEY_REVOKED_MESSAGE : NO_ACTIVE_API_KEY_MESSAGE, REPLY_OPTIONS);
-  }
-
-  private async handleAdd(ctx: CommandContext<Context>): Promise<void> {
-    const args = parseAddCommandArgs(ctx.match);
-    if (!args) {
-      await ctx.reply(ADD_USAGE_MESSAGE, REPLY_OPTIONS);
-      return;
-    }
-
-    const dto = plainToInstance(CreateMonitorDto, args);
-    const errors = await validate(dto);
-    if (errors.length > 0) {
-      await ctx.reply(invalidMonitorMessage(getValidationMessages(errors)), REPLY_OPTIONS);
-      return;
-    }
-
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const monitor = await this.monitorsService.create(user.id, dto);
-    await ctx.reply(monitorAddedMessage(monitor), REPLY_OPTIONS);
-  }
-
-  private async handleList(ctx: Context): Promise<void> {
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const monitors = await this.monitorsService.findAll(user.id);
-    await ctx.reply(
-      monitors.length > 0 ? monitorListMessage(monitors) : NO_MONITORS_MESSAGE,
-      REPLY_OPTIONS,
-    );
-  }
-
-  private async handleStatus(ctx: CommandContext<Context>): Promise<void> {
-    const number = parseMonitorNumber(ctx.match);
-    if (!number) {
-      await ctx.reply(STATUS_USAGE_MESSAGE, REPLY_OPTIONS);
-      return;
-    }
-
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const monitor = await this.findMonitorByNumber(user.id, number);
-    if (!monitor) {
-      await ctx.reply(monitorNumberNotFoundMessage(number), REPLY_OPTIONS);
-      return;
-    }
-
-    const stats = await this.checksService.getStats(monitor.id, user.id, {
-      period: STATUS_STATS_PERIOD,
-    });
-    await ctx.reply(monitorStatusMessage(monitor, stats), REPLY_OPTIONS);
-  }
-
-  private async handleRemove(ctx: CommandContext<Context>): Promise<void> {
-    const number = parseMonitorNumber(ctx.match);
-    if (!number) {
-      await ctx.reply(REMOVE_USAGE_MESSAGE, REPLY_OPTIONS);
-      return;
-    }
-
-    const user = await this.resolveUser(ctx);
-    if (!user) return;
-
-    const monitor = await this.findMonitorByNumber(user.id, number);
-    if (!monitor) {
-      await ctx.reply(monitorNumberNotFoundMessage(number), REPLY_OPTIONS);
-      return;
-    }
-
-    await this.monitorsService.remove(monitor.id, user.id);
-    await ctx.reply(monitorRemovedMessage(monitor), REPLY_OPTIONS);
-  }
-
-  /** Number as shown by /list: 1-based, in the same order. */
-  private async findMonitorByNumber(userId: string, number: number): Promise<Monitor | undefined> {
-    const monitors = await this.monitorsService.findAll(userId);
-    return monitors.at(number - 1);
-  }
-
-  private async resolveUser(ctx: Context): Promise<User | null> {
-    if (!ctx.from) return null;
-    return this.usersService.findOrCreateFromTelegram(toTelegramProfile(ctx.from));
   }
 }
