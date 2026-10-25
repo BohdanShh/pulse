@@ -24,6 +24,7 @@ import {
   ADD_USAGE_MESSAGE,
   API_KEY_REVOKED_MESSAGE,
   NO_ACTIVE_API_KEY_MESSAGE,
+  NO_MONITORS_MESSAGE,
 } from '../constants/messages.constant.js';
 import {
   BOT_COMMANDS,
@@ -33,6 +34,7 @@ import {
 import { apiKeyIssuedMessage } from '../utils/api-key-issued-message.util.js';
 import { invalidMonitorMessage } from '../utils/invalid-monitor-message.util.js';
 import { monitorAddedMessage } from '../utils/monitor-added-message.util.js';
+import { monitorListMessage } from '../utils/monitor-list-message.util.js';
 import { parseAddCommandArgs } from '../utils/parse-add-command-args.util.js';
 import { toTelegramProfile } from '../utils/to-telegram-profile.util.js';
 import { welcomeMessage } from '../utils/welcome-message.util.js';
@@ -58,6 +60,7 @@ export class TelegramBotService
     this.bot.command('apikey', ctx => this.handleApiKey(ctx));
     this.bot.command('revoke', ctx => this.handleRevoke(ctx));
     this.bot.command('add', ctx => this.handleAdd(ctx));
+    this.bot.command('list', ctx => this.handleList(ctx));
 
     this.bot.catch(({ error, ctx }) => {
       this.logger.error(`Failed to handle update ${ctx.update.update_id}`, getErrorStack(error));
@@ -127,6 +130,14 @@ export class TelegramBotService
 
     const monitor = await this.monitorsService.create(user.id, dto);
     await ctx.reply(monitorAddedMessage(monitor), NO_LINK_PREVIEW);
+  }
+
+  private async handleList(ctx: Context): Promise<void> {
+    const user = await this.resolveUser(ctx);
+    if (!user) return;
+
+    const monitors = await this.monitorsService.findAll(user.id);
+    await ctx.reply(monitors.length > 0 ? monitorListMessage(monitors) : NO_MONITORS_MESSAGE);
   }
 
   private async resolveUser(ctx: Context): Promise<User | null> {
