@@ -4,6 +4,6 @@ export function welcomeMessage(firstName: string): string {
     '',
     "I'm Pulse — I monitor your APIs and websites and let you know here when they go down or recover.",
     '',
-    'Send /apikey to get a key for the REST API. Monitor commands are coming soon.',
+    'Send /add <url> to start monitoring a URL, or /apikey to get a key for the REST API.',
   ].join('\n');
 }
