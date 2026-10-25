@@ -1,11 +1,13 @@
 export function apiKeyIssuedMessage(key: string): string {
   return [
-    '🔑 Your new API key:',
+    '🔑 <b>Your new REST API key</b>',
+    'For scripts and tools outside Telegram.',
     '',
     `<code>${key}</code>`,
     '',
-    'Tap it to copy. Send it in the <code>Authorization: Bearer &lt;key&gt;</code> header.',
+    'Tap it to copy, then send it in the header:',
+    '<code>Authorization: Bearer &lt;key&gt;</code>',
     '',
-    '⚠️ It is shown only once and your previous key no longer works.',
+    "⚠️ It's shown only once. Your previous key no longer works.",
   ].join('\n');
 }

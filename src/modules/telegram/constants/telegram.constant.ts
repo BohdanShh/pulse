@@ -10,14 +10,20 @@ export const BOT_COMMANDS: BotCommand[] = [
   { command: 'list', description: 'Show your monitors' },
   { command: 'status', args: '<number>', description: 'Show monitor details and uptime' },
   { command: 'remove', args: '<number>', description: 'Stop monitoring a URL' },
-  { command: 'apikey', description: 'Get a new API key (revokes the previous one)' },
-  { command: 'revoke', description: 'Revoke your API key' },
+  { command: 'apikey', description: 'Get a key to use the REST API outside Telegram' },
+  { command: 'revoke', description: 'Revoke your REST API key' },
 ];
 
 export const POLLING_CONFLICT_ERROR_CODE = 409;
 
-/** Telegram would otherwise fetch monitored URLs to build a preview (e.g. a JSON file card). */
-export const NO_LINK_PREVIEW = { link_preview_options: { is_disabled: true } };
+/**
+ * Options for every bot reply: HTML formatting, and no link previews
+ * (Telegram would otherwise fetch monitored URLs to build one, e.g. a JSON file card).
+ */
+export const REPLY_OPTIONS = {
+  parse_mode: 'HTML',
+  link_preview_options: { is_disabled: true },
+} as const;
 
 export const MONITOR_STATUS_EMOJI: Record<MonitorStatus, string> = {
   UP: '🟢',

@@ -1,3 +1,8 @@
+import { escapeHtml } from './escape-html.util.js';
+
 export function invalidMonitorMessage(messages: string[]): string {
-  return ['❌ Cannot add this monitor:', ...messages.map(message => `• ${message}`)].join('\n');
+  return [
+    '❌ <b>Cannot add this monitor</b>',
+    ...messages.map(message => `• ${escapeHtml(message)}`),
+  ].join('\n');
 }

@@ -8,15 +8,13 @@ export function monitorStatsLines({
   avgResponseTimeMs,
   p95ResponseTimeMs,
 }: StatsDto): string[] {
-  if (checks === 0) return [`Last ${period}: no checks yet`];
+  const title = `📊 <b>Last ${period}</b>`;
+  if (checks === 0) return [title, 'No checks yet'];
 
-  const lines = [
-    `Last ${period}:`,
-    `Uptime: ${uptimePercent}% (${checks} checks, ${failures} failed)`,
-  ];
+  const lines = [title, `Uptime: <b>${uptimePercent}%</b> (${checks} checks, ${failures} failed)`];
 
   if (avgResponseTimeMs !== null) {
-    lines.push(`Response time: avg ${avgResponseTimeMs} ms, p95 ${p95ResponseTimeMs} ms`);
+    lines.push(`Response: avg ${avgResponseTimeMs} ms · p95 ${p95ResponseTimeMs} ms`);
   }
 
   return lines;

@@ -1,10 +1,12 @@
 import { Monitor } from '../../monitors/entities/monitor.entity.js';
+import { escapeHtml } from './escape-html.util.js';
 
 export function monitorAddedMessage({ name, url, method, intervalSeconds }: Monitor): string {
   return [
-    `✅ Monitor added: ${name}`,
+    '✅ <b>Monitor added</b>',
     '',
-    `${method} ${url}`,
-    `Checked every ${intervalSeconds}s. The first check runs within a few seconds.`,
+    `<b>${escapeHtml(name)}</b>`,
+    `<code>${method} ${escapeHtml(url)}</code>`,
+    `⏱ Every ${intervalSeconds}s · first check in a few seconds`,
   ].join('\n');
 }

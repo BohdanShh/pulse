@@ -32,8 +32,8 @@ import {
 } from '../constants/messages.constant.js';
 import {
   BOT_COMMANDS,
-  NO_LINK_PREVIEW,
   POLLING_CONFLICT_ERROR_CODE,
+  REPLY_OPTIONS,
   STATUS_STATS_PERIOD,
 } from '../constants/telegram.constant.js';
 import { apiKeyIssuedMessage } from '../utils/api-key-issued-message.util.js';
@@ -68,7 +68,7 @@ export class TelegramBotService
 
   onModuleInit(): void {
     this.bot.command('start', ctx => this.handleStart(ctx));
-    this.bot.command('help', ctx => ctx.reply(helpMessage(BOT_COMMANDS)));
+    this.bot.command('help', ctx => ctx.reply(helpMessage(BOT_COMMANDS), REPLY_OPTIONS));
     this.bot.command('apikey', ctx => this.handleApiKey(ctx));
     this.bot.command('revoke', ctx => this.handleRevoke(ctx));
     this.bot.command('add', ctx => this.handleAdd(ctx));
@@ -108,7 +108,7 @@ export class TelegramBotService
     const user = await this.resolveUser(ctx);
     if (!user) return;
 
-    await ctx.reply(welcomeMessage(user.firstName));
+    await ctx.reply(welcomeMessage(user.firstName), REPLY_OPTIONS);
   }
 
   private async handleApiKey(ctx: Context): Promise<void> {
@@ -116,7 +116,7 @@ export class TelegramBotService
     if (!user) return;
 
     const key = await this.apiKeysService.issue(user.id);
-    await ctx.reply(apiKeyIssuedMessage(key), { parse_mode: 'HTML' });
+    await ctx.reply(apiKeyIssuedMessage(key), REPLY_OPTIONS);
   }
 
   private async handleRevoke(ctx: Context): Promise<void> {
@@ -124,20 +124,20 @@ export class TelegramBotService
     if (!user) return;
 
     const revoked = await this.apiKeysService.revoke(user.id);
-    await ctx.reply(revoked ? API_KEY_REVOKED_MESSAGE : NO_ACTIVE_API_KEY_MESSAGE);
+    await ctx.reply(revoked ? API_KEY_REVOKED_MESSAGE : NO_ACTIVE_API_KEY_MESSAGE, REPLY_OPTIONS);
   }
 
   private async handleAdd(ctx: CommandContext<Context>): Promise<void> {
     const args = parseAddCommandArgs(ctx.match);
     if (!args) {
-      await ctx.reply(ADD_USAGE_MESSAGE, { parse_mode: 'MarkdownV2', ...NO_LINK_PREVIEW });
+      await ctx.reply(ADD_USAGE_MESSAGE, REPLY_OPTIONS);
       return;
     }
 
     const dto = plainToInstance(CreateMonitorDto, args);
     const errors = await validate(dto);
     if (errors.length > 0) {
-      await ctx.reply(invalidMonitorMessage(getValidationMessages(errors)), NO_LINK_PREVIEW);
+      await ctx.reply(invalidMonitorMessage(getValidationMessages(errors)), REPLY_OPTIONS);
       return;
     }
 
@@ -145,7 +145,7 @@ export class TelegramBotService
     if (!user) return;
 
     const monitor = await this.monitorsService.create(user.id, dto);
-    await ctx.reply(monitorAddedMessage(monitor), NO_LINK_PREVIEW);
+    await ctx.reply(monitorAddedMessage(monitor), REPLY_OPTIONS);
   }
 
   private async handleList(ctx: Context): Promise<void> {
@@ -153,13 +153,16 @@ export class TelegramBotService
     if (!user) return;
 
     const monitors = await this.monitorsService.findAll(user.id);
-    await ctx.reply(monitors.length > 0 ? monitorListMessage(monitors) : NO_MONITORS_MESSAGE);
+    await ctx.reply(
+      monitors.length > 0 ? monitorListMessage(monitors) : NO_MONITORS_MESSAGE,
+      REPLY_OPTIONS,
+    );
   }
 
   private async handleStatus(ctx: CommandContext<Context>): Promise<void> {
     const number = parseMonitorNumber(ctx.match);
     if (!number) {
-      await ctx.reply(STATUS_USAGE_MESSAGE, { parse_mode: 'MarkdownV2' });
+      await ctx.reply(STATUS_USAGE_MESSAGE, REPLY_OPTIONS);
       return;
     }
 
@@ -168,20 +171,20 @@ export class TelegramBotService
 
     const monitor = await this.findMonitorByNumber(user.id, number);
     if (!monitor) {
-      await ctx.reply(monitorNumberNotFoundMessage(number));
+      await ctx.reply(monitorNumberNotFoundMessage(number), REPLY_OPTIONS);
       return;
     }
 
     const stats = await this.checksService.getStats(monitor.id, user.id, {
       period: STATUS_STATS_PERIOD,
     });
-    await ctx.reply(monitorStatusMessage(monitor, stats), NO_LINK_PREVIEW);
+    await ctx.reply(monitorStatusMessage(monitor, stats), REPLY_OPTIONS);
   }
 
   private async handleRemove(ctx: CommandContext<Context>): Promise<void> {
     const number = parseMonitorNumber(ctx.match);
     if (!number) {
-      await ctx.reply(REMOVE_USAGE_MESSAGE, { parse_mode: 'MarkdownV2' });
+      await ctx.reply(REMOVE_USAGE_MESSAGE, REPLY_OPTIONS);
       return;
     }
 
@@ -190,12 +193,12 @@ export class TelegramBotService
 
     const monitor = await this.findMonitorByNumber(user.id, number);
     if (!monitor) {
-      await ctx.reply(monitorNumberNotFoundMessage(number));
+      await ctx.reply(monitorNumberNotFoundMessage(number), REPLY_OPTIONS);
       return;
     }
 
     await this.monitorsService.remove(monitor.id, user.id);
-    await ctx.reply(monitorRemovedMessage(monitor));
+    await ctx.reply(monitorRemovedMessage(monitor), REPLY_OPTIONS);
   }
 
   /** Number as shown by /list: 1-based, in the same order. */
