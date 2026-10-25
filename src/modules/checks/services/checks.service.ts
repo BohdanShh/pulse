@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PaginationQueryDto } from '../../../common/pagination/dtos/pagination-query.dto.js';
 import { buildPaginationMetadata } from '../../../common/pagination/utils/build-pagination-metadata.util.js';
@@ -10,6 +11,10 @@ import { ChecksPageDto } from '../dtos/checks-page.dto.js';
 import { StatsQueryDto } from '../dtos/stats-query.dto.js';
 import { StatsDto } from '../dtos/stats.dto.js';
 import { Check } from '../entities/check.entity.js';
+import {
+  MONITOR_STATUS_CHANGED,
+  type MonitorStatusChangedEvent,
+} from '../events/monitor-status-changed.event.js';
 import { ChecksRepository } from '../repositories/checks.repository.js';
 import { CheckerService } from './checker.service.js';
 
@@ -19,6 +24,7 @@ export class ChecksService {
     private readonly checksRepository: ChecksRepository,
     private readonly checkerService: CheckerService,
     private readonly monitorsService: MonitorsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async runCheck(monitorId: string, userId: string): Promise<Check> {
@@ -29,11 +35,23 @@ export class ChecksService {
   async checkMonitor(monitor: Monitor): Promise<Check> {
     const checkedAt = new Date();
     const result = await this.checkerService.check(monitor);
+    const status = result.ok ? 'UP' : 'DOWN';
 
-    return this.checksRepository.recordCheck(monitor.id, result, {
-      status: result.ok ? 'UP' : 'DOWN',
+    const check = await this.checksRepository.recordCheck(monitor.id, result, {
+      status,
       checkedAt,
     });
+
+    if (status !== monitor.status) {
+      this.eventEmitter.emit(MONITOR_STATUS_CHANGED, {
+        monitor,
+        from: monitor.status,
+        to: status,
+        check,
+      } satisfies MonitorStatusChangedEvent);
+    }
+
+    return check;
   }
 
   async findByMonitor(
