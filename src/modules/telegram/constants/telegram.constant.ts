@@ -4,6 +4,7 @@ export const BOT_COMMANDS = [
   { command: 'start', description: 'Start using Pulse' },
   { command: 'add', description: 'Start monitoring a URL' },
   { command: 'list', description: 'Show your monitors' },
+  { command: 'remove', description: 'Stop monitoring a URL' },
   { command: 'apikey', description: 'Get a new API key (revokes the previous one)' },
   { command: 'revoke', description: 'Revoke your API key' },
 ];

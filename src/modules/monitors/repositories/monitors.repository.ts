@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 import { DB, type Database } from '../../../database/database.module.js';
 import { monitors } from '../../../database/schema/index.js';
@@ -23,7 +23,11 @@ export class MonitorsRepository {
   }
 
   findAllByUser(userId: string): Promise<Monitor[]> {
-    return this.db.select().from(monitors).where(eq(monitors.userId, userId));
+    return this.db
+      .select()
+      .from(monitors)
+      .where(eq(monitors.userId, userId))
+      .orderBy(asc(monitors.createdAt), asc(monitors.id));
   }
 
   async findByIdAndUser(id: string, userId: string): Promise<Monitor | undefined> {

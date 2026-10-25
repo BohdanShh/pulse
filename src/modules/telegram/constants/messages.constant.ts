@@ -17,3 +17,11 @@ export const ADD_USAGE_MESSAGE = [
 export const NO_ACTIVE_API_KEY_MESSAGE = 'You have no active API key. Send /apikey to get one.';
 
 export const NO_MONITORS_MESSAGE = 'You have no monitors yet. Send /add to add one.';
+
+/** MarkdownV2, see ADD_USAGE_MESSAGE. */
+export const REMOVE_USAGE_MESSAGE = [
+  'To remove a monitor, send /remove followed by its number from /list:',
+  '```bash',
+  '/remove 2',
+  '```',
+].join('\n');
