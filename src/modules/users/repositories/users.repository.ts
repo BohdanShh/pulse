@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
+import { eq } from 'drizzle-orm';
+
 import { DB, type Database } from '../../../database/database.module.js';
 import { users } from '../../../database/schema/index.js';
 import { User } from '../entities/user.entity.js';
@@ -16,6 +18,11 @@ export class UsersRepository {
       .onConflictDoUpdate({ target: users.telegramId, set: { username, firstName } })
       .returning();
 
+    return user;
+  }
+
+  async findById(id: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, id));
     return user;
   }
 }

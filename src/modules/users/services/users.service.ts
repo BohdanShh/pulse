@@ -11,4 +11,8 @@ export class UsersService {
   findOrCreateFromTelegram(profile: TelegramProfile): Promise<User> {
     return this.usersRepository.upsertByTelegramId(profile);
   }
+
+  findById(id: string): Promise<User | undefined> {
+    return this.usersRepository.findById(id);
+  }
 }

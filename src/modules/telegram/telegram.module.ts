@@ -6,10 +6,12 @@ import { MonitorsModule } from '../monitors/monitors.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccountCommands } from './commands/account.commands.js';
 import { MonitorCommands } from './commands/monitor.commands.js';
+import { NotificationsService } from './services/notifications.service.js';
 import { TelegramBotService } from './services/telegram-bot.service.js';
 
 @Module({
   imports: [UsersModule, AuthModule, MonitorsModule, ChecksModule],
-  providers: [TelegramBotService, AccountCommands, MonitorCommands],
+  providers: [TelegramBotService, AccountCommands, MonitorCommands, NotificationsService],
+  exports: [NotificationsService],
 })
 export class TelegramModule {}
