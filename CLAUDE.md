@@ -18,7 +18,13 @@ bun run format           # prettier + import sorting
 bun run db:generate      # drizzle-kit: SQL migration from src/database/schema/index.ts -> drizzle/
 bun run db:migrate       # apply migrations to DATABASE_URL
 bun run db:studio
+
+docker compose up -d --build   # Postgres + migrations + app in containers (needs .env for TELEGRAM_BOT_TOKEN)
+docker compose logs -f app
+docker compose down            # stop; add -v to also delete the database volume
 ```
+
+- Docker: `compose.yaml` runs `db` (Postgres 18, not published to the host, data in the `pgdata` volume), a one-off `migrate` job (the Dockerfile `build` stage, which has drizzle-kit) and `app` (Node running `dist/`, starts only after `migrate` exits successfully). `DATABASE_URL` is set in `compose.yaml` and overrides the one from `.env`. The Docker app uses the same bot token, so never run it next to `start:dev`.
 
 - There are no tests yet (by design, until stage 8). Verify changes with `bun run build`, `bun run lint`, and manual requests (curl / Swagger / the bot).
 - `.env` needs `PORT`, `DATABASE_URL`, `TELEGRAM_BOT_TOKEN` (see `.env.example`); `validateEnv` in `src/config/env.config.ts` fails startup on invalid values, and `DatabaseModule` fails startup if `SELECT 1` fails.

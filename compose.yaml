@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+      POSTGRES_DB: pulse
+    volumes:
+      # Postgres 18+ keeps its data under /var/lib/postgresql/<version>/
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pulse -d pulse']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # One-off job: applies migrations, then exits. Uses the build stage, which has drizzle-kit.
+  migrate:
+    build:
+      context: .
+      target: build
+    command: ['bun', 'run', 'db:migrate']
+    environment:
+      DATABASE_URL: postgresql://pulse:pulse@db:5432/pulse
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build: .
+    # TELEGRAM_BOT_TOKEN and PORT; DATABASE_URL below overrides the one from .env
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://pulse:pulse@db:5432/pulse
+    ports:
+      - '3000:3000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:
