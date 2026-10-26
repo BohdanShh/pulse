@@ -12,6 +12,7 @@ bun run start:dev        # watch mode; Swagger UI at http://localhost:3000/docs
 bun run build            # nest build -> dist/
 bunx tsc --noEmit        # type-check while start:dev is running (nest build wipes dist/ and kills the watcher's app)
 bun run lint             # oxlint --type-aware src/ (no-floating-promises is an error)
+bun run test             # vitest run (unit tests); bun run test:watch to rerun on save
 bun run format           # prettier + import sorting
 
 bun run db:generate --name <name>   # drizzle-kit: SQL migration from src/database/schema/index.ts -> drizzle/
@@ -23,7 +24,7 @@ docker compose logs -f app
 docker compose down            # stop; add -v to also delete the database volume
 ```
 
-- There are no tests. Verify changes with a type-check, `bun run lint`, and manual requests (curl / Swagger / the bot).
+- Unit tests (Vitest) are `*.spec.ts` next to the file they test and are excluded from the build in `tsconfig.build.json`. They construct classes directly with `vi.fn()` mocks instead of a Nest testing module, and never touch the database or Telegram. Verify changes with `bun run test`, a type-check, `bun run lint`, and manual requests (curl / Swagger / the bot).
 - `.env` needs `PORT`, `DATABASE_URL`, `TELEGRAM_BOT_TOKEN` (see `.env.example`). `validateEnv` in `src/config/env.config.ts` fails startup on invalid values, and `DatabaseModule` fails startup if `SELECT 1` fails.
 - Starting the app also starts Telegram long polling. Never run a second instance with the same token (e.g. `node dist/main` or `docker compose up` next to `start:dev`) — Telegram returns 409 and one poller stops.
 - `drizzle.config.ts` reads `.env` via `process.loadEnvFile()`. Migrations have descriptive names (`0004_create_api_keys.sql`) — always pass `--name`, and review the generated SQL before migrating.
